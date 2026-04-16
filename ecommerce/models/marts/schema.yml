@@ -19,28 +19,28 @@ models:
           - not_null
           - relationships:
               arguments:
-                to: ref('dim_products')
+                to: "{{ ref('dim_products') }}"
                 field: product_key
       - name: customer_key
         tests:
           - not_null
           - relationships:
               arguments:
-                to: ref('dim_customers')
+                to: "{{ ref('dim_customers') }}"
                 field: customer_key
       - name: seller_key
         tests:
           - not_null
           - relationships:
               arguments:
-                to: ref('dim_sellers')
+                to: "{{ ref('dim_sellers') }}"
                 field: seller_key
       - name: customer_zip
         tests:
           - not_null
           - relationships:
               arguments:
-                to: ref('dim_zips')
+                to: "{{ ref('dim_zips') }}"
                 field: zip
       - name: item_price
         tests:
