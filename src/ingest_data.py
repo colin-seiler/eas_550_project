@@ -65,17 +65,20 @@ def clean_ts(val):
 # orders csv uses customer_id not unique_id so need to map it
 customers_df = pd.read_csv("data/olist_customers_dataset.csv")
 cust_id_map = dict(zip(customers_df["customer_id"], customers_df["customer_unique_id"]))
+cust_zip_map = dict(zip(customers_df["customer_id"], customers_df["customer_zip_code_prefix"].astype(str).str.zfill(5)))
 
 valid_statuses = {"delivered", "canceled", "shipped", "invoiced", "unavailable"}
 orders = pd.read_csv("data/olist_orders_dataset.csv")
 for _, r in orders.iterrows():
     cid = cust_map.get(cust_id_map.get(r["customer_id"]))
+    zip_code = cust_zip_map.get(r["customer_id"])
+    zip_code = zip_code if zip_code in valid_zips else None
     status = r["order_status"] if r["order_status"] in valid_statuses else None
     cur.execute("""INSERT INTO Commerce.Orders
         (Reference, CustID, Zip, Status, OrderPurchaseTime, OrderApprovalTime,
          OrderDeliverCarrier, OrderDeliverCustomer, OrderDeliverEstimate)
         VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s) ON CONFLICT DO NOTHING""",
-        (r["order_id"], cid, None, status,
+        (r["order_id"], cid, zip_code, status,
          clean_ts(r.get("order_purchase_timestamp")),
          clean_ts(r.get("order_approved_at")),
          clean_ts(r.get("order_delivered_carrier_date")),
