@@ -1,4 +1,8 @@
 pandas
 sqlalchemy
 psycopg2-binary
+<<<<<<< HEAD
+python-dotenv
+=======
 dbt-postgres
+>>>>>>> 576923e9321967150abc6e731acc66de615d2346
