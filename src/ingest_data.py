@@ -73,6 +73,8 @@ for _, r in orders.iterrows():
     cid = cust_map.get(cust_id_map.get(r["customer_id"]))
     zip_code = cust_zip_map.get(r["customer_id"])
     zip_code = zip_code if zip_code in valid_zips else None
+    if zip_code is None:
+        continue
     status = r["order_status"] if r["order_status"] in valid_statuses else None
     cur.execute("""INSERT INTO Commerce.Orders
         (Reference, CustID, Zip, Status, OrderPurchaseTime, OrderApprovalTime,
