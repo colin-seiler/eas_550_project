@@ -1,0 +1,18 @@
+[sqlfluff]
+templater = dbt
+dialect = postgres
+indent_unit = space
+tab_space_size = 4
+warn_unused_ignores = false
+
+# where our dbt project is
+[sqlfluff:templater:dbt]
+project_dir = ./ecommerce
+
+# changed to consistent bc strict uppercase was flagging
+# lowercase 'as' in other sql file
+[sqlfluff:rules:capitalisation.keywords]
+capitalisation_policy = consistent
+
+[sqlfluff:rules:capitalisation.identifiers]
+capitalisation_policy = consistent
