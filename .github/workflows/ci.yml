@@ -93,7 +93,7 @@ jobs:
                 port: 5432
                 dbname: ecommerce_ci
                 user: dbt_ci
-                password: ${{ secrets.POSTGRES_CI_PASSWORD }}
+                password: ${{ secrets.DB_PASSWORD }}
                 schema: commerce
                 threads: 4
           EOF
@@ -101,7 +101,7 @@ jobs:
       # loads our tables
       - name: Load our schema into the CI database
         env:
-          PGPASSWORD: ${{ secrets.POSTGRES_CI_PASSWORD }}
+          PGPASSWORD: ${{ secrets.DB_PASSWORD }}
         run: psql -h localhost -U dbt_ci -d ecommerce_ci -f src/schema.sql
 
       # runs staging models then marts then all the tests
