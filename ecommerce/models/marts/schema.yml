@@ -44,3 +44,21 @@ models:
       - name: item_freight
         tests:
           - not_null
+  - name: sum_customers_zip
+    columns:
+      - name: customer_zip
+        tests:
+          - not_null
+          - unique
+      - name: total_orders
+        tests:
+          - not_null
+  - name: sum_sellers_zip
+    columns:
+      - name: seller_zip
+        tests:
+          - not_null
+          - unique
+      - name: total_orders
+        tests:
+          - not_null
