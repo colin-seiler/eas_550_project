@@ -4,12 +4,19 @@ import os
 import psycopg2
 import pandas as pd
 import pydeck as pdk
+import json
+
 
 st.set_page_config(layout="wide")
 @st.cache_resource
 def get_connection():
     load_dotenv()
     return psycopg2.connect(os.getenv("DATABASE_URL"))
+
+@st.cache_data
+def load_geojson():
+    with open("brazil-states.geojson") as f:
+        return json.load(f)
 
 @st.cache_data(ttl=3600)
 def load_customer_summary():
@@ -23,23 +30,12 @@ def load_seller_summary():
 
 def reset_top_x():
     if st.session_state.tab == "Customers":
-        st.session_state.top_x = 5000
+        st.session_state.top_x = 10000
     else:
         st.session_state.top_x = 1000
 
-col1, col2 = st.columns([5,2])
-with col1:
-    if "tab" not in st.session_state:
-        st.session_state.tab = "Customers"
-    if "top_x" not in st.session_state:
-        st.session_state.top_x = 1000
-
-    df = load_customer_summary().rename(columns={"customer_zip": "zip"}) if st.session_state.tab == "Customers" else load_seller_summary().rename(columns={"seller_zip": "zip"})
-    base_count = df['zip'].count()
-    df = df.nlargest(st.session_state.top_x, "total_orders")
-    st.title("Brazilian E-Commerce Dashboard")
-
-    #Map work
+@st.fragment
+def render_map(df, all_features, selected_features):
     layer = pdk.Layer(
         "ScatterplotLayer",
         data=df,
@@ -52,20 +48,112 @@ with col1:
         pickable=True
     )
 
-    view_state = pdk.ViewState(
-        latitude=df["latitude"].mean(),
-        longitude=df["longitude"].mean(),
-        zoom=4
+    all_features = geojson_data["features"]
+    selected_features = [f for f in all_features if f["properties"]["sigla"] in selected_states] if selected_states else all_features
+
+    base_layer = pdk.Layer(
+        "GeoJsonLayer",
+        data=all_features,
+        stroked=True,
+        filled=True,
+        get_fill_color=[255, 255, 255, 10],
+        get_line_color=[255, 255, 255, 100],
+        line_width_min_pixels=1
+    )
+
+    highlight_layer = pdk.Layer(
+        "GeoJsonLayer",
+        data=selected_features,
+        stroked=False,
+        filled=True,
+        get_fill_color=[255, 255, 255, 60],
     )
 
     st.pydeck_chart(pdk.Deck(
-        layers=[layer],
+        layers=[base_layer, highlight_layer, layer],
         initial_view_state=view_state,
         tooltip={"text": "Zip: {zip}\nOrders: {total_orders}\nAverage Price: {avg_order_price}\nAverage Shipping Price: {avg_order_freight}\nAverage Days to Ship: {avg_ship_days}\nAverage Delivery Days: {avg_delivery_days}\nAverage Late Days: {avg_late_days}"}
     ))
 
+@st.fragment
+def render_cust_chart():
+    state_cust_chart = cust.groupby("state")[st.session_state.get("cust_metric", "total_orders")].agg(
+        "sum" if st.session_state.get("cust_metric", "total_orders") == "total_orders" else "mean"
+    ).reset_index().sort_values(st.session_state.get("cust_metric", "total_orders"), ascending=False).round(2)
+    st.header('Customer Charts')
+    st.bar_chart(
+        state_cust_chart,
+        x="state",
+        y=st.session_state.get("cust_metric", "total_orders"),
+        use_container_width=True,
+        color="#0000FF"
+    )
+    metric = st.selectbox(
+        "Metric",
+        options=["total_orders", "avg_order_price", "avg_order_freight", "avg_delivery_days", "avg_late_days"],
+        key="cust_metric"
+    )
+
+@st.fragment
+def render_sell_chart():
+    state_sell_chart = sell.groupby("state")[st.session_state.get("sell_metric", "total_orders")].agg(
+        "sum" if st.session_state.get("sell_metric", "total_orders") == "total_orders" else "mean"
+    ).reset_index().sort_values(st.session_state.get("sell_metric", "total_orders"), ascending=False).round(2)
+    st.header('Seller Charts')
+    st.bar_chart(
+        state_sell_chart,
+        x="state",
+        y=st.session_state.get("sell_metric", "total_orders"),
+        use_container_width=True,
+        color="#FF0000"
+    )
+    metric = st.selectbox(
+        "Metric",
+        options=["total_orders", "avg_order_price", "avg_order_freight", "avg_delivery_days", "avg_late_days"],
+        key="sell_metric"
+    )
+
+geojson_data = load_geojson()
+
+
+if "view_state" not in st.session_state:
+    st.session_state.view_state = pdk.ViewState(
+        latitude=-15.0,
+        longitude=-50.0,
+        zoom=3
+    )
+
+view_state = st.session_state.view_state
+
+st.title("Brazilian E-Commerce Dashboard")
+if "tab" not in st.session_state:
+    st.session_state.tab = "Customers"
+if "top_x" not in st.session_state:
+    st.session_state.top_x = 1000
+
+
+df = load_customer_summary().rename(columns={"customer_zip": "zip"}) if st.session_state.tab == "Customers" else load_seller_summary().rename(columns={"seller_zip": "zip"})
+cust = load_customer_summary().rename(columns={"customer_zip": "zip"})
+sell = load_seller_summary().rename(columns={"seller_zip": "zip"})
+base_count = df['zip'].count()
+states = sorted(df["state"].dropna().unique().tolist())
+df = df.nlargest(st.session_state.top_x, "total_orders")
+
+col1, col2 = st.columns([5,3])
+with col1:
+    selected_states = st.pills(
+        "Filter by State",
+        options=states,
+        selection_mode="multi",
+        key="states"
+    )
+    if not selected_states:
+        selected_states=states
+    df = df[df["state"].isin(selected_states)]
+
+    render_map(df, states, selected_states)
+
     sub1, sub2 = st.columns([2, 5])
-    #view picker
     with sub1:
         st.radio("View", ["Customers", "Sellers"], key='tab', on_change=reset_top_x)
 
@@ -84,6 +172,20 @@ with col1:
     df = df.nlargest(st.session_state.top_x, "total_orders")
 
 with col2:
-    st.metric("Total Orders", df["total_orders"].sum())
-    st.metric("Avg Order Price", f"${df['avg_order_price'].mean():.2f}")
-    st.metric("Avg Delivery Days", f"{df['avg_delivery_days'].mean():.1f} days")
+    filtered = df[df["state"].isin(selected_states)] if selected_states else df
+    state_summary = filtered.groupby("state").agg(
+        total_orders=("total_orders", "sum"),
+        avg_order_price=("avg_order_price", "mean"),
+        avg_order_freight=("avg_order_freight", "mean"),
+        avg_delivery_days=("avg_delivery_days", "mean"),
+        avg_late_days=("avg_late_days", "mean")
+    ).round(2).sort_values("total_orders", ascending=False).reset_index().set_index('state')
+    st.dataframe(state_summary, height=650, use_container_width=True)
+
+state_orders = df.groupby("state")["total_orders"].sum().sort_values(ascending=False).reset_index()
+
+col3, col4 = st.columns([1,1])
+with col3:
+    render_cust_chart()
+with col4:
+    render_sell_chart()
