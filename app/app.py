@@ -189,3 +189,15 @@ with col3:
     render_cust_chart()
 with col4:
     render_sell_chart()
+
+col5, col6 = st.columns([1,1])
+
+with col5:
+    st.header("Avg Delivery Days by State")
+    delivery = cust.groupby("state")["avg_delivery_days"].mean().reset_index().sort_values("avg_delivery_days", ascending=False).round(2)
+    st.line_chart(delivery, x="state", y="avg_delivery_days", use_container_width=True)
+
+with col6:
+    st.header("Avg Freight vs Avg Order Price by State")
+    freight = cust.groupby("state").agg(avg_order_freight=("avg_order_freight","mean"), avg_order_price=("avg_order_price","mean")).reset_index().round(2)
+    st.scatter_chart(freight, x="avg_order_freight", y="avg_order_price", use_container_width=True)
