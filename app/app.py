@@ -193,9 +193,9 @@ with col4:
 col5, col6 = st.columns([1,1])
 
 with col5:
-    st.header("Avg Delivery Days")
+    st.header("Avg Delivery Days by State")
     delivery = cust.groupby("state")["avg_delivery_days"].mean().reset_index().sort_values("avg_delivery_days", ascending=False).round(2)
-    st.line_chart(delivery, x="state", y="avg_delivery_days", use_container_width=True)
+    st.bar_chart(delivery, x="state", y="avg_delivery_days", use_container_width=True, color="#00AAFF")
 
 with col6:
     st.header("Avg Freight vs Avg Order Price")
