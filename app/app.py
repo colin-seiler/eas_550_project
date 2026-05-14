@@ -204,3 +204,11 @@ with col6:
     st.header("Avg Freight vs Avg Order Price")
     freight = cust.groupby("state").agg(avg_order_freight=("avg_order_freight","mean"), avg_order_price=("avg_order_price","mean")).reset_index().round(2)
     st.scatter_chart(freight, x="avg_order_freight", y="avg_order_price", use_container_width=True)
+
+st.header("Customer vs Seller Orders by State")
+comp = pd.merge(
+    cust.groupby("state")["total_orders"].sum().reset_index().rename(columns={"total_orders": "customers"}),
+    sell.groupby("state")["total_orders"].sum().reset_index().rename(columns={"total_orders": "sellers"}),
+    on="state"
+).sort_values("customers", ascending=False)
+st.bar_chart(comp, x="state", y=["customers", "sellers"], use_container_width=True)
