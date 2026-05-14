@@ -2,7 +2,7 @@
 Class project for EAS 550 at University at Buffalo
 
 ## Brazilian E-Commerce Dashboard
-An interactive business intelligence dashboard built with Steamlit, visualizing Brazilian e-commerce order data accross customers and sellers by geographic region.
+An interactive business intelligence dashboard built with Steamlit, visualizing Brazilian e-commerce order data across customers and sellers by geographic region.
 
 **Live App:**  {NEEEEEED URL}
 
