@@ -192,6 +192,8 @@ with col4:
 
 col5, col6 = st.columns([1,1])
 
+col5, col6 = st.columns([1,1])
+
 with col5:
     st.header("Ship Days vs Delivery Days by State")
     ship = cust.groupby("state").agg(
@@ -211,4 +213,4 @@ comp = pd.merge(
     sell.groupby("state")["total_orders"].sum().reset_index().rename(columns={"total_orders": "sellers"}),
     on="state"
 ).sort_values("customers", ascending=False)
-st.bar_chart(comp, x="state", y=["customers", "sellers"], use_container_width=True)
+st.bar_chart(comp, x="state", y=["customers", "sellers"], use_container_width=True, color=["#0000FF", "#FF0000"])
