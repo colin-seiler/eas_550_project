@@ -30,7 +30,8 @@ The app follows a modern data pipeline architecture:
 
 ### Star Schema
 
-{Insert schema hereeeeeee}
+<img width="1800" height="800" alt="Untitled (10)" src="https://github.com/user-attachments/assets/b495516e-c87e-4e95-9f87-85bd52a95a1f" />
+
 
 ---
 
